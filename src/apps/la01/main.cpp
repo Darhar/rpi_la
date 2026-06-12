@@ -164,27 +164,27 @@ static bool performExport(
             file.viewState = viewState;
 
             return saveCaptureFile(
-                "/home/darren/captures/export.la01",
+                "~/captures/export.la01",
                 file);
         }
 
         case ExportFormat::CsvTransitions:
             return exportCaptureCsv(
-                "/home/darren/captures/transitions_long.csv",
+                "~/captures/transitions_long.csv",
                 events,
                 &cap,
                 CsvExportFormat::ChannelTransitionsLong);
 
         case ExportFormat::CsvBusEvents:
             return exportCaptureCsv(
-                "/home/darren/captures/bus_events.csv",
+                "~/captures/bus_events.csv",
                 events,
                 &cap,
                 CsvExportFormat::EventBusTransitions);
 
         case ExportFormat::CsvSamples:
             return exportCaptureCsv(
-                "/home/darren/captures/samples_wide.csv",
+                "~/captures/samples_wide.csv",
                 events,
                 &cap,
                 CsvExportFormat::SamplesWide);
@@ -417,87 +417,7 @@ ProtocolRegistry protocolRegistry;
     std::printf("timestamps: %zu\n", cap.timestamps.size());
     uint32_t maxPrint = cap.sampleCount < 32 ? cap.sampleCount : 32;
 
-
     LogicEventCapture events = buildLogicEvents(cap, req.frequency);
-/*
-printf("bus events:%zu\n", events.events.size());
-printf("channel event channels:%zu\n", events.channelEvents.size());
-
-for(size_t ch = 0; ch < events.channelEvents.size(); ++ch) {
-    printf("CH%zu transitions:%zu\n", ch, events.channelEvents[ch].size());
-}    
-
-exportCaptureCsv(
-    "/home/darren/captures/transitions_long.csv",
-    events,
-    &cap,
-    CsvExportFormat::ChannelTransitionsLong
-);
-
-exportCaptureCsv(
-    "/home/darren/captures/bus_events.csv",
-    events,
-    &cap,
-    CsvExportFormat::EventBusTransitions
-);
-
-exportCaptureCsv(
-    "/home/darren/captures/samples_wide.csv",
-    events,
-    &cap,
-    CsvExportFormat::SamplesWide
-);
-*/
-
-/**/
-
-
-/*
-CaptureFile file = {};
-
-file.metadata.sampleRateHz = events.sampleRateHz;
-file.metadata.sampleCount = events.sampleCount;
-file.metadata.channelCount = events.channelCount;
-file.metadata.preTriggerSamples = req.preSamples;
-file.metadata.postTriggerSamples = req.postSamples;
-
-strncpy(file.metadata.name, "logic capture", sizeof(file.metadata.name) - 1);
-strncpy(file.metadata.notes, "Saved from LA01", sizeof(file.metadata.notes) - 1);
-
-file.raw = cap;
-file.events = events;
-
-if(viewState.channels.empty()) {
-    viewState.channels.resize(events.channelCount);
-}
-
-file.viewState = viewState;
-
-if(saveCaptureFile("/home/darren/captures/test.la01", file)) {
-    printf("Capture saved\n");
-} else {
-    printf("Capture save failed\n");
-}
-
-//--------------------
-CaptureFile loaded = {};
-
-if(loadCaptureFile("/home/darren/captures/test.la01", loaded)) {
-    cap = loaded.raw;
-    events = loaded.events;
-    viewState = loaded.viewState;
-
-    printf("Capture loaded\n");
-    printf("loaded samples: %u\n", events.sampleCount);
-    printf("loaded channels: %u\n", events.channelCount);
-    printf("loaded events: %zu\n", events.events.size());
-    printf("loaded view channels: %zu\n", viewState.channels.size());
-} else {
-    printf("Capture load failed\n");
-}
-
-*/
-
 
 //-------------
 
