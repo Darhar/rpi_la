@@ -1,0 +1,4 @@
+to stop the launcher from a ssh session
+    sudo systemctl stop rpi-launcher
+Rebuild
+    cmake -B build -DUSERGB111=ON
