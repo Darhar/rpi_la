@@ -6,8 +6,8 @@
 //static constexpr int WIDTH  = 480;
 //static constexpr int HEIGHT = 320;
 
-static constexpr int FRAME_PIXELS = WIDTH * HEIGHT;
-static constexpr int FRAME_BYTES  = FRAME_PIXELS * 2; // RGB565
+//static constexpr int FRAME_PIXELS = WIDTH * HEIGHT;
+static constexpr int FRAME_BYTES  = WIDTH * HEIGHT * 2; // RGB565
 
 //if the CHUNK_SIZE = 16 * 512 we get SPI transfer: Message too long
 static constexpr int CHUNK_SIZE = 16 * 256;

@@ -3,20 +3,20 @@
 #include <cstdio>
 #include <stdint.h>
 #include <string>
-#include "../terminal/screenbuffer.h"
-#include "../gfx/renderer.h"
+#include "terminal/screenbuffer.h"
 #include "ili9488.h"
 #include "drivers/cardkb.h"
+#include "gfx/renderer.h"
 #include "gfx/font8x16.h"
 #include "gfx/palette.h"
-#include "../../drivers/gusman_logic.h"
-#include "../../logic/logic_view.h"
-#include "../../logic/logic_events.h"
-#include "../../logic/pwm_measure.h"
-#include "../../logic/protocols/protocol_candidate.h"
-#include "../../logic/protocols/protocol_registry.h"
-#include "../../logic/capture_file.h"
-#include "../../logic/export/export_csv.h"
+#include "gusman_logic.h"
+#include "logic/logic_view.h"
+#include "logic/logic_events.h"
+#include "logic/pwm_measure.h"
+#include "logic/protocols/protocol_candidate.h"
+#include "logic/protocols/protocol_registry.h"
+#include "logic/capture_file.h"
+#include "logic/export/export_csv.h"
 
 #define KEY_ESC             (0xB1)
 #define KEY_UP              (0xB5)
@@ -164,27 +164,27 @@ static bool performExport(
             file.viewState = viewState;
 
             return saveCaptureFile(
-                "~/captures/export.la01",
+                "/home/darren/captures/export.la01",
                 file);
         }
 
         case ExportFormat::CsvTransitions:
             return exportCaptureCsv(
-                "~/captures/transitions_long.csv",
+                "/home/darren/captures/transitions_long.csv",
                 events,
                 &cap,
                 CsvExportFormat::ChannelTransitionsLong);
 
         case ExportFormat::CsvBusEvents:
             return exportCaptureCsv(
-                "~/captures/bus_events.csv",
+                "/home/darren/captures/bus_events.csv",
                 events,
                 &cap,
                 CsvExportFormat::EventBusTransitions);
 
         case ExportFormat::CsvSamples:
             return exportCaptureCsv(
-                "~/captures/samples_wide.csv",
+                "/home/darren/captures/samples_wide.csv",
                 events,
                 &cap,
                 CsvExportFormat::SamplesWide);
@@ -196,10 +196,12 @@ static bool performExport(
 
     return false;
 }
+/*
 static bool bitAt(const GusmanCapture& cap, uint32_t sample, uint8_t ch)
 {
     return (cap.samples[sample] >> ch) & 1u;
 }
+*/
 
 static void clampViewState(LogicViewState& s,
                            const LogicEventCapture& cap)
@@ -346,17 +348,20 @@ int main()
 {
     bool captureRequested = false;
     bool redrawRequested = true;
+    
     LogicViewState viewState;
-ExportUi exportUi;    
     viewState.firstSample = 0;
     viewState.cursorSample = 0;
-    viewState.selectedChannel = 0;
-    AppMode appMode = AppMode::View;
+    viewState.selectedChannel = 0;    
+
+    ExportUi exportUi;   
     CaptureSettings settings;
     CaptureSettings editSettings;
     SettingsUi settingsUi;
-std::vector<ProtocolCandidate> protocolCandidates;
-ProtocolRegistry protocolRegistry;
+    std::vector<ProtocolCandidate> protocolCandidates;   
+    ProtocolRegistry protocolRegistry;
+
+    AppMode appMode = AppMode::View;
 
     printf("Starting Logic Analyser\n");
     bool running = true;
@@ -416,6 +421,7 @@ ProtocolRegistry protocolRegistry;
     std::printf("channels: %u\n", cap.channelCount);
     std::printf("timestamps: %zu\n", cap.timestamps.size());
     uint32_t maxPrint = cap.sampleCount < 32 ? cap.sampleCount : 32;
+
 
     LogicEventCapture events = buildLogicEvents(cap, req.frequency);
 
@@ -490,45 +496,45 @@ ProtocolRegistry protocolRegistry;
         if(kb.poll(key))
         {
             printf("key:0x%02X\n", key);
-if(appMode == AppMode::Export) {
-    switch(key) {
-        case KEY_LEFT:
-            exportUi.format =
-                changeValue(EXPORT_FORMATS, exportUi.format, -1);
-            break;
+            if(appMode == AppMode::Export) {
+                switch(key) {
+                    case KEY_LEFT:
+                        exportUi.format =
+                            changeValue(EXPORT_FORMATS, exportUi.format, -1);
+                        break;
 
-        case KEY_RIGHT:
-            exportUi.format =
-                changeValue(EXPORT_FORMATS, exportUi.format, 1);
-            break;
+                    case KEY_RIGHT:
+                        exportUi.format =
+                            changeValue(EXPORT_FORMATS, exportUi.format, 1);
+                        break;
 
-        case KEY_ENTER:
-        {
-            bool ok = performExport(
-                exportUi.format,
-                cap,
-                events,
-                viewState,
-                settings);
+                    case KEY_ENTER:
+                    {
+                        bool ok = performExport(
+                            exportUi.format,
+                            cap,
+                            events,
+                            viewState,
+                            settings);
 
-            std::printf(
-                "export %s: %s\n",
-                exportFormatName(exportUi.format),
-                ok ? "ok" : "failed");
+                        std::printf(
+                            "export %s: %s\n",
+                            exportFormatName(exportUi.format),
+                            ok ? "ok" : "failed");
 
-            appMode = AppMode::View;
-            break;
-        }
+                        appMode = AppMode::View;
+                        break;
+                    }
 
-        case KEY_ESC:
-        case 'e':
-            appMode = AppMode::View;
-            break;
-    }
+                    case KEY_ESC:
+                    case 'e':
+                        appMode = AppMode::View;
+                        break;
+                }
 
-    redrawRequested = true;
-    continue;
-}
+                redrawRequested = true;
+                continue;
+            }
 
             if(appMode == AppMode::Settings) {
                 switch(key) {
@@ -589,17 +595,18 @@ if(appMode == AppMode::Export) {
 
             switch(key)
             {
-case 'e':
-    exportUi.selected = 0;
-    exportUi.format = ExportFormat::CsvTransitions;
-    appMode = AppMode::Export;
-    redrawRequested = true;
-    break;                
+                case 'e':
+                    exportUi.selected = 0;
+                    exportUi.format = ExportFormat::CsvTransitions;
+                    appMode = AppMode::Export;
+                    redrawRequested = true;
+                    break;                
                 case '+':
                 case 'f':
                 printf("Zoom In\n");
                     if(viewState.samplesPerPixel > 1) viewState.samplesPerPixel /= 2;
                     centreCursor(viewState, events);
+                    redrawRequested = true;
                     break;
 
                 case '-':
@@ -607,6 +614,7 @@ case 'e':
                 printf("Zoom Out\n");
                     viewState.samplesPerPixel *= 2;
                     centreCursor(viewState, events);
+                    redrawRequested = true;
                     break;
 
                 case 'n':
@@ -623,7 +631,7 @@ case 'e':
                         viewState.cursorSample = events.events[size_t(idx)].sampleIndex;
                         centreCursor(viewState, events);
                     }
-
+                    redrawRequested = true;
                     break;
                 }
 
@@ -642,7 +650,7 @@ case 'e':
                         viewState.cursorSample = events.events[size_t(idx)].sampleIndex;
                         centreCursor(viewState, events);
                     }
-
+                    redrawRequested = true;
                     break;
                 }
 
@@ -651,6 +659,7 @@ case 'e':
                 printf("Set marker A at sample %u\n", viewState.cursorSample);
                     viewState.markerA = viewState.cursorSample;
                     viewState.markerASet = true;
+                    redrawRequested = true;
                     break;
 
                 case 'b':
@@ -658,12 +667,14 @@ case 'e':
                     viewState.markerB = viewState.cursorSample;
                     viewState.markerBSet = true;
                     printf("Set marker B at sample %u\n", viewState.cursorSample);
+                    redrawRequested = true;
                     break;
                 case 'c':
                 case 'C':
                 {
                     viewState.markerASet = false;
                     viewState.markerBSet = false;
+                    redrawRequested = true;
                     break;
                 }                    
                 case 'h':
@@ -671,6 +682,7 @@ case 'e':
                 {
                     auto& ch = viewState.channels[viewState.selectedChannel];
                     ch.visible = !ch.visible;
+                    redrawRequested = true;
                     break;
                 }
 
@@ -679,6 +691,7 @@ case 'e':
                     captureRequested = true;
                     viewState.markerASet = false;
                     viewState.markerBSet = false;                    
+                    redrawRequested = true;
                     break;
                 case 'm':
                 case 'M':
@@ -700,7 +713,7 @@ case 'e':
 
                         ensureCursorVisible(viewState);
                     }
-
+                    redrawRequested = true;
                     break;
                 }
                 case 's':
@@ -714,11 +727,13 @@ case 'e':
                 case KEY_UP:
                     if(viewState.selectedChannel > 0)
                         viewState.selectedChannel--;
+                    redrawRequested = true;
                     break;
 
                 case KEY_DOWN:
                     if(viewState.selectedChannel + 1 < events.channelCount)
                         viewState.selectedChannel++;
+                    redrawRequested = true;
                     break;
 
                 case KEY_LEFT:
@@ -726,24 +741,24 @@ case 'e':
                     uint32_t step = viewState.samplesPerPixel * 40;
                     viewState.firstSample =
                         (viewState.firstSample > step) ? viewState.firstSample - step : 0;
-                    break;
+                     redrawRequested = true;
+                   break;
                 }
 
                 case KEY_RIGHT:
                 {
                     uint32_t step = viewState.samplesPerPixel * 40;
-                    uint32_t maxFirst =
-                        events.sampleCount > 1 ? events.sampleCount - 1 : 0;
-
+                    uint32_t maxFirst = events.sampleCount > 1 ? events.sampleCount - 1 : 0;
                     viewState.firstSample += step;
-                    if(viewState.firstSample > maxFirst)
-                        viewState.firstSample = maxFirst;
+                    if(viewState.firstSample > maxFirst) viewState.firstSample = maxFirst;
+                    redrawRequested = true;
                     break;
                 }
                 case KEY_ENTER:
                 {
                     auto& ch = viewState.channels[viewState.selectedChannel];
                     ch.minimised = !ch.minimised;
+                    redrawRequested = true;
                     break;
                 }
                 case KEY_BACKSPACE:
@@ -786,18 +801,20 @@ case 'e':
 
         }
         clampViewState(viewState, events);
-        //view.draw(screen, events, viewState);
-
         view.draw(screen, events, viewState);
 
         if(appMode == AppMode::Settings) {
             drawSettingsOverlay(screen, editSettings, settingsUi);
         }
-if(appMode == AppMode::Export) {
-    view.draw(screen, events, viewState);
-    drawExportOverlay(screen, exportUi);
-}
-        renderer.render();
+        if(appMode == AppMode::Export) {
+            view.draw(screen, events, viewState);
+            drawExportOverlay(screen, exportUi);
+        }
+
+        if(redrawRequested){
+            redrawRequested = false;
+            renderer.render();
+        }
 
         //usleep(3000); // about 33 FPS target
     }
