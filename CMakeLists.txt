@@ -13,6 +13,9 @@ include_directories(
 
 add_executable(la01
     src/apps/la01/main.cpp
+    src/apps/la01/export_popup.cpp
+    src/apps/la01/settings_popup.cpp
+    src/apps/la01/la_app.cpp
 
     src/hal/spi.cpp
     src/hal/gpio.cpp
@@ -20,17 +23,21 @@ add_executable(la01
     src/drivers/ili9488.cpp
     src/drivers/cardkb.cpp
     src/drivers/gusman_logic.cpp
+
     src/gfx/renderer.cpp
     src/gfx/palette.cpp
-    src/terminal/screenbuffer.cpp
     src/gfx/font8x16.cpp
+
+    src/terminal/screenbuffer.cpp
+    
     src/logic/logic_view.cpp
     src/logic/logic_events.cpp
     src/logic/pwm_measure.cpp
     src/logic/uart_decode.cpp
     src/logic/protocols/protocol_registry.cpp
-    src/logic/capture_file.cpp
+    src/logic/capture_controller.cpp
     src/logic/export/export_csv.cpp
+
 )
 
 if(USERGB111)

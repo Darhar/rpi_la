@@ -31,6 +31,21 @@ struct LogicViewState {
     std::vector<LogicChannelView> channels;
 };
 
+void clampViewState(
+    LogicViewState& state,
+    const LogicEventCapture& cap
+);
+
+void centreCursor(
+    LogicViewState& state,
+    const LogicEventCapture& cap
+);
+
+void ensureCursorVisible(
+    LogicViewState& state,
+    const LogicEventCapture& cap
+);
+
 class LogicView {
 public:
     //void draw(ScreenBuffer& screen, const LogicEventCapture& cap);

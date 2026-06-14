@@ -14,7 +14,7 @@ constexpr int SCREEN_H = 320;
 constexpr int MENU_H = 50;
 constexpr int LEFT_W = 72;
 constexpr int WAVE_X = LEFT_W;
-constexpr int WAVE_W = SCREEN_W - LEFT_W;
+constexpr int APP_WAVE_W = SCREEN_W - LEFT_W;
 
 constexpr int NORMAL_ROW_H = 34;
 constexpr int MINI_ROW_H   = 18;
@@ -29,6 +29,73 @@ constexpr uint8_t COL_SELECT_BG = 1;
 
 constexpr uint8_t COL_MARKER_A = 4;
 constexpr uint8_t COL_MARKER_B = 5;
+
+void clampViewState(
+    LogicViewState& state,
+    const LogicEventCapture& cap
+) {
+    if(cap.sampleCount == 0)
+        return;
+
+    if(state.samplesPerPixel == 0)
+        state.samplesPerPixel = 1;
+
+    if(state.cursorSample >= cap.sampleCount)
+        state.cursorSample = cap.sampleCount - 1;
+
+    if(state.firstSample >= cap.sampleCount)
+        state.firstSample = cap.sampleCount - 1;
+
+    if(state.selectedChannel >= cap.channelCount)
+        state.selectedChannel =
+            cap.channelCount > 0 ? cap.channelCount - 1 : 0;
+}
+
+void centreCursor(
+    LogicViewState& state,
+    const LogicEventCapture& cap
+) {
+    if(cap.sampleCount == 0)
+        return;
+
+    if(state.samplesPerPixel == 0)
+        state.samplesPerPixel = 1;
+
+    uint32_t visibleSamples =
+        APP_WAVE_W * state.samplesPerPixel;
+
+    if(state.cursorSample > visibleSamples / 2)
+        state.firstSample =
+            state.cursorSample - visibleSamples / 2;
+    else
+        state.firstSample = 0;
+
+    clampViewState(state, cap);
+}
+
+void ensureCursorVisible(
+    LogicViewState& state,
+    const LogicEventCapture& cap
+) {
+    if(cap.sampleCount == 0)
+        return;
+
+    if(state.samplesPerPixel == 0)
+        state.samplesPerPixel = 1;
+
+    uint32_t visibleSamples =
+        APP_WAVE_W * state.samplesPerPixel;
+
+    if(state.cursorSample < state.firstSample) {
+        state.firstSample = state.cursorSample;
+    } else if(state.cursorSample >=
+              state.firstSample + visibleSamples) {
+        state.firstSample =
+            state.cursorSample - visibleSamples / 2;
+    }
+
+    clampViewState(state, cap);
+}
 
 std::string formatFrequency(double hz)
 {
@@ -164,7 +231,7 @@ void LogicView::drawChannel(
     int lowY  = y + h - 4;
     bool prev = bitAt(cap, firstSample, ch);
 
-    for(int px = 0; px < WAVE_W; ++px) {
+    for(int px = 0; px < APP_WAVE_W; ++px) {
 
         uint32_t s0 = firstSample + uint32_t(px) * samplesPerPixel;
         uint32_t s1 = s0 + samplesPerPixel;
@@ -211,7 +278,7 @@ void LogicView::drawCursor(
     uint32_t offset = state.cursorSample - state.firstSample;
     uint32_t px = offset / state.samplesPerPixel;
 
-    if(px >= WAVE_W) return;
+    if(px >= APP_WAVE_W) return;
     int x = WAVE_X + int(px);
     screen.lineV(x, MENU_H, SCREEN_H - 1, COL_SELECT);
 }
@@ -228,7 +295,7 @@ void LogicView::drawSampleMarker(
     uint32_t offset = sample - state.firstSample;
     uint32_t px = offset / state.samplesPerPixel;
 
-    if(px >= WAVE_W)
+    if(px >= APP_WAVE_W)
         return;
 
     int x = WAVE_X + int(px);
