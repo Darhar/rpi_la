@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <string>
 
 enum class AppMode {
     View,
@@ -35,21 +36,10 @@ public:
     int run();
 
 private:
-    bool capture();
-    void redraw();
-
-    void handleKey(uint8_t key);
-    void handleViewKey(uint8_t key);
-    void handleSettingsKey(uint8_t key);
-    void handleExportKey(uint8_t key);
-
-    void resetViewAfterCapture();
-    void requestRedraw();
-
-private:
     bool m_running = true;
     bool m_captureRequested = false;
     bool m_redrawRequested = true;
+    bool m_analyserAvailable = false;
 
     AppMode m_appMode = AppMode::View;
 
@@ -75,4 +65,20 @@ private:
 
     std::vector<ProtocolCandidate> m_protocolCandidates;
     ProtocolRegistry m_protocolRegistry;
+    bool tryOpenAnalyser();
+    void initView();
+    void initialiseEmptyCapture();
+
+    bool capture();
+    void redraw();
+
+    void handleKey(uint8_t key);
+    void handleViewKey(uint8_t key);
+    void handleSettingsKey(uint8_t key);
+    void handleExportKey(uint8_t key);
+
+    void resetViewAfterCapture();
+    void requestRedraw();
+
+
 };

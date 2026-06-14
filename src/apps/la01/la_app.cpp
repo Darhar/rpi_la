@@ -21,11 +21,7 @@ bool LaApp::init()
         return false;
     }
 
-    if(!m_analyser.openDevice("/dev/ttyACM0")) {
-        std::printf("analyser open failed: %s\n",
-                    m_analyser.lastError().c_str());
-        return false;
-    }
+    m_analyserAvailable = tryOpenAnalyser();
 
     for(int i = 0; i < 24; ++i)
         m_request.channels[i] = i;
@@ -45,11 +41,14 @@ bool LaApp::init()
     m_request.frequency = m_settings.sampleRateHz;
     m_request.postSamples = m_settings.postSamples;
 
-    if(!capture())
-        return false;
+    if(m_analyserAvailable) {
+        capture();
+    } else {
+        initialiseEmptyCapture();
+    }
 
-    requestRedraw();
-    return true;
+        requestRedraw();
+        return true;
 }
 
 int LaApp::run()
@@ -83,6 +82,16 @@ int LaApp::run()
 
 bool LaApp::capture()
 {
+
+    if(!m_analyserAvailable) {
+        m_analyserAvailable = tryOpenAnalyser();
+
+        if(!m_analyserAvailable) {
+            initialiseEmptyCapture();
+            return false;
+        }
+    }
+
     std::printf("requesting capture...\n");
 
     m_request.frequency = m_settings.sampleRateHz;
@@ -91,6 +100,8 @@ bool LaApp::capture()
     if(!m_analyser.requestCapture(m_request)) {
         std::printf("request failed: %s\n",
                     m_analyser.lastError().c_str());
+        m_analyserAvailable = false;
+        initialiseEmptyCapture();
         return false;
     }
 
@@ -101,6 +112,8 @@ bool LaApp::capture()
     )) {
         std::printf("read failed: %s\n",
                     m_analyser.lastError().c_str());
+        m_analyserAvailable = false;
+        initialiseEmptyCapture();
         return false;
     }
 
@@ -129,8 +142,22 @@ bool LaApp::capture()
     return true;
 }
 
-void LaApp::resetViewAfterCapture()
+bool LaApp::tryOpenAnalyser()
 {
+    if(m_analyser.openDevice("/dev/ttyACM0")) {
+        std::printf("analyser connected\n");
+        return true;
+    }
+
+    std::printf(
+        "analyser open failed: %s\n",
+        m_analyser.lastError().c_str()
+    );
+
+    return false;
+}
+
+void LaApp::initView(){
     m_viewState.firstSample = 0;
     m_viewState.cursorSample = 0;
     m_viewState.markerA = 0;
@@ -138,15 +165,36 @@ void LaApp::resetViewAfterCapture()
     m_viewState.markerASet = false;
     m_viewState.markerBSet = false;
     m_viewState.selectedChannel = 0;
+    m_viewState.channels.clear();
+    m_viewState.channels.resize(m_events.channelCount);    
+}
 
+void LaApp::initialiseEmptyCapture()
+{
+    m_rawCapture = GusmanCapture{};
+
+    m_events = LogicEventCapture{};
+    m_events.sampleCount = 0;
+    m_events.channelCount = m_request.channelCount;
+    m_events.sampleRateHz = m_settings.sampleRateHz;
+    m_events.events.clear();
+    m_events.channelEvents.clear();
+    m_events.channelEvents.resize(m_events.channelCount);
+
+    initView();
+    m_viewState.samplesPerPixel = 1;
+
+}
+
+void LaApp::resetViewAfterCapture()
+{
+
+    initView();
     m_viewState.samplesPerPixel =
         (m_events.sampleCount + APP_WAVE_W - 1) / APP_WAVE_W;
 
     if(m_viewState.samplesPerPixel < 1)
         m_viewState.samplesPerPixel = 1;
-
-    m_viewState.channels.clear();
-    m_viewState.channels.resize(m_events.channelCount);
 
     clampViewState(m_viewState, m_events);
 }
